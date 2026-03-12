@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Paddock Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#367C2B" />
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root{
+      --jd-green:#367C2B;
+      --jd-green-dark:#2f6c25;
+      --jd-yellow:#FFDE00;
+      --bg:#f4f6f3;
+      --panel:#ffffff;
+      --border:#2f6c25;
+      --text:#1f2a1f;
+      --muted:#5b665b;
+      --bad:#b42318;
+      --shadow:0 2px 8px rgba(0,0,0,0.08);
+      --radius:14px;
+    }
+
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html{ font-size:16px; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:"Slabby Prices","Rockwell","Roboto Slab","Arial",serif;
+    }
+    .header{
+      background:var(--jd-green);
+      color:#fff;
+      text-align:center;
+      padding:15px 12px;
+      font-size:1.55rem;
+      font-weight:700;
+      letter-spacing:0.3px;
+      box-shadow:var(--shadow);
+      position:sticky;
+      top:0;
+      z-index:10;
+    }
+    .wrapper{
+      max-width:760px;
+      margin:0 auto;
+      padding:10px;
+    }
+    .panel{
+      background:var(--panel);
+      border:2px solid var(--border);
+      border-radius:var(--radius);
+      padding:12px;
+      box-shadow:var(--shadow);
+      margin-bottom:12px;
+    }
+    .toggle-row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:8px;
+      margin-bottom:12px;
+    }
+    .toggle-btn{
+      border:2px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      color:var(--jd-green-dark);
+      min-height:48px;
+      font-family:inherit;
+      font-size:1rem;
+      font-weight:700;
+      padding:10px 8px;
+      cursor:pointer;
+    }
+    .toggle-btn.active{
+      background:var(--jd-green);
+      color:#fff;
+    }
+    label{
+      display:block;
+      font-size:0.98rem;
+      font-weight:700;
+      margin:10px 0 6px;
+    }
+    input, select{
+      width:100%;
+      min-height:48px;
+      padding:11px 13px;
+      font-size:1.05rem;
+      border:1px solid #b8c0b8;
+      border-radius:10px;
+      background:#fff;
+      color:var(--text);
+      font-family:inherit;
+      appearance:none;
+    }
+    input:focus, select:focus{
+      outline:3px solid rgba(255,222,0,0.45);
+      border-color:var(--jd-green);
+    }
+    .gap-line{
+      background:var(--panel);
+      border:2px solid var(--border);
+      border-radius:var(--radius);
+      padding:12px 14px;
+      box-shadow:var(--shadow);
+      margin:0 0 12px;
+      font-size:1rem;
+      font-weight:700;
+      color:var(--jd-green-dark);
+    }
+    .error{
+      color:var(--bad);
+      font-weight:700;
+      margin:-2px 0 12px;
+      min-height:20px;
+      font-size:0.9rem;
+    }
+    .table-wrap{
+      background:#fff;
+      border:2px solid var(--border);
+      border-radius:var(--radius);
+      overflow:hidden;
+      box-shadow:var(--shadow);
+    }
+    table{
+      width:100%;
+      border-collapse:collapse;
+      font-size:0.97rem;
+    }
+    thead th{
+      background:var(--jd-green);
+      color:#fff;
+      padding:10px 6px;
+      text-align:center;
+      font-weight:700;
+      line-height:1.15;
+    }
+    tbody td{
+      padding:10px 6px;
+      text-align:center;
+      border-top:1px solid #d7ddd7;
+      background:#fff;
+    }
+    tbody tr:nth-child(even) td{ background:#fafcf9; }
+    .no-solutions{
+      padding:16px 12px;
+      text-align:center;
+      font-weight:700;
+      color:var(--muted);
+    }
+    .note{
+      font-size:0.82rem;
+      color:var(--muted);
+      margin-top:10px;
+      line-height:1.35;
+    }
+    @media (min-width: 761px){
+      .wrapper{ max-width:900px; }
+      .main-grid{ display:grid; grid-template-columns:1fr 1fr; gap:12px; align-items:start; }
+    }
+    @media (max-width: 430px){
+      html{ font-size:15px; }
+      .header{ font-size:1.42rem; }
+      .toggle-btn{ font-size:0.96rem; }
+      table{ font-size:0.92rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Paddock Planner</div>
+
+  <div class="wrapper">
+    <div class="toggle-row" aria-label="Guidance line spacing based on">
+      <button type="button" id="toggle40" class="toggle-btn">40 footer</button>
+      <button type="button" id="toggle60" class="toggle-btn">60 footer</button>
+    </div>
+
+    <div class="main-grid">
+      <div class="panel">
+        <label for="startLine">Start Guidance Line</label>
+        <input id="startLine" type="text" value="10S" placeholder="e.g. 10S" autocapitalize="characters" />
+
+        <label for="finishLine">Finish Guidance Line</label>
+        <input id="finishLine" type="text" value="24N" placeholder="e.g. 24N" autocapitalize="characters" />
+      </div>
+
+      <div class="panel">
+        <label for="r1type">40 footer finishes</label>
+        <select id="r1type">
+          <option value="any">No preference</option>
+          <option value="even">Finish this end</option>
+          <option value="odd">Finish other end</option>
+        </select>
+
+        <label for="r2type">60 footer finishes</label>
+        <select id="r2type">
+          <option value="any">No preference</option>
+          <option value="even">Finish this end</option>
+          <option value="odd">Finish other end</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="gap-line" id="gapText">Remaining gap: -</div>
+    <div class="error" id="errorMsg"></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>40 footer runs</th>
+            <th>60 footer runs</th>
+            <th>Total width (m)</th>
+          </tr>
+        </thead>
+        <tbody id="results"></tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      40 footer is fixed at 12m. 60 footer is fixed at 18m. Finish this end = even number of runs. Finish other end = odd number of runs.
+    </div>
+  </div>
+
+  <script>
+    const WIDTH_40 = 12;
+    const WIDTH_60 = 18;
+    const STORAGE_KEY = "paddockPlannerLineMachine";
+    let selectedSpacing = 12;
+
+    function parseGuidance(input){
+      const cleaned = String(input || "").trim().toUpperCase();
+      const match = cleaned.match(/^(\d+)\s*([NSEW])$/);
+      if(!match) return null;
+      return { number: parseInt(match[1], 10), side: match[2] };
+    }
+
+    function checkParity(value, type){
+      if(type === "any") return true;
+      if(type === "even") return value % 2 === 0;
+      if(type === "odd") return value % 2 === 1;
+      return true;
+    }
+
+    function getGapLines(start, finish){
+      const opposite = { N:"S", S:"N", E:"W", W:"E" };
+      if(start.side === finish.side){
+        return Math.abs(finish.number - start.number) + 1;
+      }
+      if(opposite[start.side] === finish.side){
+        return start.number + finish.number + 1;
+      }
+      return null;
+    }
+
+    function setError(message){
+      document.getElementById("errorMsg").textContent = message || "";
+    }
+
+    function setGapText(distance){
+      document.getElementById("gapText").textContent = Number.isFinite(distance)
+        ? ("Remaining gap: " + distance + "m")
+        : "Remaining gap: -";
+    }
+
+    function renderNoSolutions(message){
+      const tbody = document.getElementById("results");
+      tbody.innerHTML = "";
+      const row = document.createElement("tr");
+      row.innerHTML = "<td colspan='3' class='no-solutions'>" + message + "</td>";
+      tbody.appendChild(row);
+    }
+
+    function updateToggleUI(){
+      document.getElementById("toggle40").classList.toggle("active", selectedSpacing === 12);
+      document.getElementById("toggle60").classList.toggle("active", selectedSpacing === 18);
+    }
+
+    function setSpacing(value){
+      selectedSpacing = value;
+      localStorage.setItem(STORAGE_KEY, String(value));
+      updateToggleUI();
+      calculate();
+    }
+
+    function calculate(){
+      const start = parseGuidance(document.getElementById("startLine").value);
+      const finish = parseGuidance(document.getElementById("finishLine").value);
+      const r1type = document.getElementById("r1type").value;
+      const r2type = document.getElementById("r2type").value;
+      const tbody = document.getElementById("results");
+
+      setError("");
+      tbody.innerHTML = "";
+
+      if(!start || !finish){
+        setGapText(NaN);
+        setError("Enter guidance lines like 10S, 24N, 8E or 3W.");
+        renderNoSolutions("No valid solutions");
+        return;
+      }
+
+      const lines = getGapLines(start, finish);
+      if(lines === null){
+        setGapText(NaN);
+        setError("Use matching axis pairs only: N/S or E/W.");
+        renderNoSolutions("No valid solutions");
+        return;
+      }
+
+      const distance = lines * selectedSpacing;
+      setGapText(distance);
+
+      const solutions = [];
+      for(let x = 0; x <= 500; x++){
+        const remainder = distance - (x * WIDTH_40);
+        if(remainder < 0) break;
+        const yRaw = remainder / WIDTH_60;
+        if(Number.isInteger(yRaw) && yRaw >= 0){
+          const y = yRaw;
+          if(checkParity(x, r1type) && checkParity(y, r2type)){
+            solutions.push({ x, y, total: (x * WIDTH_40) + (y * WIDTH_60) });
+          }
+        }
+      }
+
+      if(solutions.length === 0){
+        renderNoSolutions("No valid solutions");
+        return;
+      }
+
+      solutions.forEach(function(s){
+        const row = document.createElement("tr");
+        row.innerHTML = "<td>" + s.x + "</td><td>" + s.y + "</td><td>" + s.total + "</td>";
+        tbody.appendChild(row);
+      });
+    }
+
+    document.getElementById("toggle40").addEventListener("click", function(){ setSpacing(12); });
+    document.getElementById("toggle60").addEventListener("click", function(){ setSpacing(18); });
+
+    document.querySelectorAll("input, select").forEach(function(el){
+      el.addEventListener("input", calculate);
+      el.addEventListener("change", calculate);
+    });
+
+    const savedSpacing = localStorage.getItem(STORAGE_KEY);
+    if(savedSpacing === "18"){
+      selectedSpacing = 18;
+    } else {
+      selectedSpacing = 12;
+    }
+    updateToggleUI();
+
+    if('serviceWorker' in navigator){
+      window.addEventListener('load', function(){
+        navigator.serviceWorker.register('service-worker.js');
+      });
+    }
+
+    calculate();
+  </script>
+</body>
+</html>
